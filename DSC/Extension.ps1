@@ -1,0 +1,189 @@
+Configuration DisableTLS
+{
+
+Param ( [string] $nodeName )
+
+Import-DscResource -ModuleName PSDesiredStateConfiguration
+
+Node $nodeName
+  {
+    #region Add-TLS
+    # Add TLS 1.0 / 1.1 / 1.2
+    $tlsVersion = "TLS 1.0", "TLS 1.1", "TLS 1.2"
+    foreach ($x in $tlsVersion)
+    {
+        $name = $x.Replace(".", "").Replace(" ","")
+        Registry "EnableServer$name"
+        {
+            Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Server"
+            ValueName = "Enabled"
+            ValueType = "Dword"
+            ValueData = "0"
+            Ensure = "Present"
+            Hex = $true
+            Force = $true
+        }
+
+        Registry "DisabledByDefaultServer$name"
+        {
+            Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Server"
+            ValueName = "DisabledByDefault"
+            ValueType = "Dword"
+            ValueData = "0"
+            Ensure = "Present"
+            Force = $true
+        }
+
+        Registry "EnableClient$name"
+        {
+            Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Client"
+            ValueName = "Enabled"
+            ValueType = "Dword"
+            ValueData = "0xffffffff"
+            Ensure = "Present"
+            Hex = $true
+            Force = $true
+        }
+
+        Registry "DisableByDefaultClient$name"
+        {
+            Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Client"
+            ValueName = "DisabledByDefault"
+            ValueType = "Dword"
+            ValueData = "0"
+            Ensure = "Present"
+            Force = $true
+        }
+    }
+  }
+}
+
+Configuration EnableTLS
+{
+
+Param ( [string] $nodeName )
+
+Import-DscResource -ModuleName PSDesiredStateConfiguration
+
+Node $nodeName
+  {
+    $tlsVersion = "TLS 1.2"
+    foreach ($x in $tlsVersion)
+    {
+        $name = $x.Replace(".", "").Replace(" ","")
+        Registry "EnableServer$name"
+        {
+            Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Server"
+            ValueName = "Enabled"
+            ValueType = "Dword"
+            ValueData = "0xffffffff"
+            Ensure = "Present"
+            Hex = $true
+            Force = $true
+        }
+
+        Registry "DisabledByDefaultServer$name"
+        {
+            Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Server"
+            ValueName = "DisabledByDefault"
+            ValueType = "Dword"
+            ValueData = "0"
+            Ensure = "Present"
+            Force = $true
+        }
+
+        Registry "EnableClient$name"
+        {
+            Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Client"
+            ValueName = "Enabled"
+            ValueType = "Dword"
+            ValueData = "0xffffffff"
+            Ensure = "Present"
+            Hex = $true
+            Force = $true
+        }
+
+        Registry "DisableByDefaultClient$name"
+        {
+            Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Client"
+            ValueName = "DisabledByDefault"
+            ValueType = "Dword"
+            ValueData = "0"
+            Ensure = "Present"
+            Force = $true
+        }
+    }
+  }
+}
+
+Configuration InstallADDSTools
+{
+
+Param ( [string] $nodeName )
+
+Import-DscResource -ModuleName PSDesiredStateConfiguration
+
+Node $nodeName
+  {
+  
+    WindowsFeature RSAT-ADDS-Tools
+    {
+      Name = "RSAT-ADDS-Tools"
+      Ensure = "Present"
+    }
+  }
+}
+
+Configuration RestartBat
+{
+
+Param ( [string] $nodeName )
+
+Import-DscResource -ModuleName PSDesiredStateConfiguration
+
+Node $nodeName
+  {
+    Script EnsurePresent
+    {
+        TestScript = {
+            Test-Path "C:\temp\Reboot.bat"
+        }
+        SetScript ={
+            Set-Content -Value "shutdown -r -t 00 -f" -Path "C:\temp\Reboot.bat"
+        }
+        GetScript = {@{Result = "EnsurePresent"}}
+    }
+  }
+}
+
+Configuration DisableFirewall
+{
+
+Param ( [string] $nodeName )
+
+Import-DscResource -ModuleName PSDesiredStateConfiguration
+
+Node $nodeName
+  {
+Script DisableFirewall 
+{
+    GetScript = {
+        @{
+            GetScript = $GetScript
+            SetScript = $SetScript
+            TestScript = $TestScript
+            Result = -not('True' -in (Get-NetFirewallProfile -All).Enabled)
+        }
+    }
+
+    SetScript = {
+        Set-NetFirewallProfile -All -Enabled False -Verbose
+    }
+
+    TestScript = {
+        $Status = -not('True' -in (Get-NetFirewallProfile -All).Enabled)
+        $Status -eq $True
+    }
+}
+  }
+}
