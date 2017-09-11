@@ -5,7 +5,7 @@ Param ( [string] $nodeName )
 
 Import-DscResource -ModuleName PSDesiredStateConfiguration
 
-Node $nodeName
+Node localhost
   {
     #region Add-TLS
     # Add TLS 1.0 / 1.1 / 1.2
