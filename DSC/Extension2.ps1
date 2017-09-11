@@ -9,7 +9,7 @@ Node $nodeName
   {
     #region Add-TLS
     # Add TLS 1.0 / 1.1 / 1.2
-    $tlsVersion = "TLS 1.0", "TLS 1.1", "TLS 1.2"
+    $tlsVersion = "TLS 1.0", "TLS 1.1"#, "TLS 1.2"
     foreach ($x in $tlsVersion)
     {
         $name = $x.Replace(".", "").Replace(" ","")
@@ -18,9 +18,9 @@ Node $nodeName
             Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Server"
             ValueName = "Enabled"
             ValueType = "Dword"
-            ValueData = "0"
+            ValueData = "00000000" #Chagned from 0 to 00000000
             Ensure = "Present"
-            Hex = $true
+            Hex = $false #ALE --| Changed to False
             Force = $true
         }
 
@@ -29,8 +29,9 @@ Node $nodeName
             Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Server"
             ValueName = "DisabledByDefault"
             ValueType = "Dword"
-            ValueData = "0"
+            ValueData = "00000000" #Chagned from 0 to 00000000
             Ensure = "Present"
+            Hex = $false #ALE --| Changed to False
             Force = $true
         }
 
@@ -50,8 +51,9 @@ Node $nodeName
             Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Client"
             ValueName = "DisabledByDefault"
             ValueType = "Dword"
-            ValueData = "0"
+            ValueData = "00000000" #Chagned from 0 to 00000000
             Ensure = "Present"
+            Hex = $false #ALE --| Changed to False
             Force = $true
         }
     }
@@ -78,8 +80,9 @@ Node $nodeName
             Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Server"
             ValueName = "DisabledByDefault"
             ValueType = "Dword"
-            ValueData = "0"
+            ValueData = "00000000" #Chagned from 0 to 00000000
             Ensure = "Present"
+            Hex = $false #ALE --| Changed to False
             Force = $true
         }
 
@@ -99,8 +102,9 @@ Node $nodeName
             Key = "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$x\Client"
             ValueName = "DisabledByDefault"
             ValueType = "Dword"
-            ValueData = "0"
+            ValueData = "00000000" #Chagned from 0 to 00000000
             Ensure = "Present"
+            Hex = $false #ALE --| Changed to False
             Force = $true
         }
     }
@@ -122,7 +126,11 @@ Node $nodeName
             Test-Path "C:\temp\Reboot.bat"
         }
         SetScript ={
-            Set-Content -Value "shutdown -r -t 00 -f" -Path "C:\temp\Reboot.bat"
+            if (!(Test-Path "C:\temp")){
+                New-Item     C:\temp -ItemType Directory -Force
+            }
+            "shutdown -r -t 00 -f" | Out-File "C:\temp\Reboot.bat" -Force
+            #Set-Content -Value "shutdown -r -t 00 -f" -Path "C:\temp\Reboot.bat" 
         }
         GetScript = {@{Result = "EnsurePresent"}}
     }
