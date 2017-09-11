@@ -112,7 +112,7 @@ Node $nodeName
     #endregion Enable-TLS
 
     #region InstallADDSTools
-    WindowsFeature RSAT-ADDS-Tools
+    WindowsFeature ADTools
     {
       Name = "RSAT-ADDS-Tools"
       Ensure = "Present"
